@@ -25,22 +25,14 @@ st.markdown(
 
     You can select the apps from the sidebar to try and experiment with any kind of input **(realtime-webcam, video and images)** depends on your use case.
 
-    #### Documentations and Links
-    - Github Project Page [Github](https://github.com/oracl4/RoadDamageDetection)
-    - You can reach me on it.mahdi.yusuf@gmail.com
-
-    #### License and Citations
-    - Road Damage Dataset from Crowdsensing-based Road Damage Detection Challenge (CRDDC2022)
-    - All rights reserved on YOLOv8 license permits by [Ultralytics](https://github.com/ultralytics/ultralytics) and [Streamlit](https://streamlit.io/) framework
+    
 """
 )
 
 st.divider()
 
 st.markdown(
-    """
-    This project is created for the [Road Damage Detection Challenge](https://s.id/RDDHariJalan23) by [Ministry of Public Works and Housing](https://pu.go.id/) for celebrating the "Peringatan Hari Jalan 2023".
-    """
+    
     
 )
 

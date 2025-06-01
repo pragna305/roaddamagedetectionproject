@@ -44,6 +44,7 @@ if cache_key in st.session_state:
     net = st.session_state[cache_key]
 else:
     net = YOLO(MODEL_LOCAL_PATH)
+    st.write("Model loaded successfully")
     st.session_state[cache_key] = net
 
 CLASSES = [
@@ -139,7 +140,7 @@ result_queue: "queue.Queue[List[Detection]]" = queue.Queue()
 
 
 def video_frame_callback(frame: av.VideoFrame) -> av.VideoFrame:
-    # Get geolocation from local storage (set by the JavaScript)
+    # Get geolocation from session_state (may be updated by JS)
     latitude = st.session_state.get("latitude", "Not Available")
     longitude = st.session_state.get("longitude", "Not Available")
 
@@ -147,11 +148,29 @@ def video_frame_callback(frame: av.VideoFrame) -> av.VideoFrame:
     latitude_placeholder.write(f"Latitude: {latitude}")
     longitude_placeholder.write(f"Longitude: {longitude}")
 
+    # Convert video frame to ndarray (OpenCV image)
     image = frame.to_ndarray(format="bgr24")
-    h_ori = image.shape[0]
-    w_ori = image.shape[1]
-    image_resized = cv2.resize(image, (640, 640), interpolation=cv2.INTER_AREA)
-    results = net.predict(image_resized, conf=score_threshold)
+
+    try:
+        # Resize to model input size (YOLO expects 640x640)
+        image_resized = cv2.resize(image, (640, 640), interpolation=cv2.INTER_AREA)
+
+        # Run prediction with confidence threshold from slider
+        results = net.predict(image_resized, conf=score_threshold)
+
+        # Annotate detected boxes on the image
+        annotated_frame = results[0].plot()
+
+        # Resize annotated image back to original frame size
+        annotated_frame = cv2.resize(annotated_frame, (image.shape[1], image.shape[0]), interpolation=cv2.INTER_AREA)
+
+        # Return annotated video frame for display
+        return av.VideoFrame.from_ndarray(annotated_frame, format="bgr24")
+
+    except Exception as e:
+        # On error, print and return the original frame (no detection)
+        print("Prediction error:", e)
+        return av.VideoFrame.from_ndarray(image, format="bgr24")
 
     # Save the results on the queue
     for result in results:
@@ -179,9 +198,9 @@ webrtc_ctx = webrtc_streamer(
     # rtc_configuration={"iceServers": STUN_SERVER},
     video_frame_callback=video_frame_callback,
     media_stream_constraints={
-        "video": {
-            "width": {"ideal": 1280, "min": 800},
-        },
+        "video": True
+            # {"width": {"ideal": 1280, "min": 800},}
+             ,
         "audio": False
     },
     async_processing=True,
@@ -199,3 +218,5 @@ if st.checkbox("Show Predictions Table", value=False):
         while True:
             result = result_queue.get()
             labels_placeholder.table(result)
+            
+            
